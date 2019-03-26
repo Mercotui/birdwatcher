@@ -1,0 +1,6 @@
+[Unit]
+Description=Launches birdwatcher camera
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/birdwatcher_camera.py
