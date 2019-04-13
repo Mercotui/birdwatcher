@@ -1,24 +1,41 @@
 #!/usr/bin/env python3
 """birdwatcher_camera takes a picture with an attached camera an stores it with a timestamp"""
-import time
-import subprocess
-import json
 import os
 import errno
+import subprocess
+import json
+from datetime import datetime
+from tzlocal import get_localzone
+from astral import Astral
 
-PICTURE_ROOT = "/tmp/"
+PICTURE_ROOT = "/tmp/birdwatcher/pictures/"
+LOCATION = "Amsterdam"
 
 def main():
     """Main entry point"""
-    current_time = time.localtime()
-    time_string = time.strftime("%Y%m%d-%H%M%S", current_time)
-    date_string = time.strftime("%Y%m%d", current_time)
-    picture_directory = PICTURE_ROOT + date_string + "/"
-    picture_name = time_string + ".jpg"
+    current_time = datetime.now()
+    local_time = current_time.astimezone(get_localzone())
 
-    take_picture(picture_directory, picture_name)
-    append_pictures_json(picture_directory, picture_name)
-    append_dates_json(date_string)
+    if is_day(local_time):
+        time_string = datetime.strftime(local_time, "%Y%m%d-%H%M%S")
+        date_string = datetime.strftime(local_time, "%Y%m%d")
+        picture_directory = PICTURE_ROOT + date_string + "/"
+        picture_name = time_string + ".jpg"
+
+        take_picture(picture_directory, picture_name)
+        append_pictures_json(picture_directory, picture_name)
+        append_dates_json(date_string)
+    else:
+        #sleep
+        exit()
+
+def is_day(local_time):
+    """Check for daylight"""
+    astral_instance = Astral()
+    astral_instance.solar_depression = 'civil'
+    city = astral_instance[LOCATION]
+    night = city.night()
+    return not night[0] < local_time < night[1]
 
 def take_picture(picture_directory, picture_name):
     """Take the picture and store it in picture_directory"""
